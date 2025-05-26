@@ -57,6 +57,11 @@ function LoginForm() {
           // ...
           console.log(user);
           updateProfile(auth.currentUser, { displayName: name });
+          console.log("Dispatch user data in production (sign-up):", {
+            mail: email.current.value,
+            displayName: name,
+            uid: user.uid,
+          });
           // Dispatch user details to Redux
           dispatch(
             setUser({
@@ -91,6 +96,11 @@ function LoginForm() {
           const user = userCredential.user;
           // ...
           console.log(user);
+          console.log("Dispatch user data in production (sign-up):", {
+            mail: email.current.value,
+            displayName: name,
+            uid: user.uid,
+          });
           // Dispatch user details to Redux
           dispatch(
             setUser({
