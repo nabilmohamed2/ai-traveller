@@ -9,11 +9,13 @@ const userSlice = createSlice({
   },
   reducers: {
     setUser(state, action) {
+      console.log("Action payload:", action.payload);
       state.mail = action.payload.mail;
       state.displayName = action.payload.displayName;
       state.uid = action.payload.uid;
     },
     clearUser(state) {
+      console.log("Clearing user info");
       state.mail = null;
       state.displayName = null;
       state.uid = null;

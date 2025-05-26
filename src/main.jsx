@@ -31,7 +31,7 @@ const routerConfig = createBrowserRouter([
   }
 ],
   {
-    basename: "/ai-traveller", // Add the base path for local and production
+    basename: "/", // Add the base path for local and production
   }
 );
 

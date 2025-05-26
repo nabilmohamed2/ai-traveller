@@ -37,6 +37,7 @@ function LoginForm() {
     console.log("Validation result:", validate);
     if (validate) {
       setError(validate); // Set the error message if validation fails
+      console.log("Validation failed:", validate);
       return;
     }
 
@@ -64,6 +65,11 @@ function LoginForm() {
               uid: user.uid,
             })
           );
+          console.log("Dispatched user data in production (sign-up):", {
+            mail: email.current.value,
+            displayName: name,
+            uid: user.uid,
+          });
         })
         .catch((error) => {
           const errorCode = error.code;
@@ -93,6 +99,11 @@ function LoginForm() {
               uid: user.uid,
             })
           );
+          console.log("Dispatched user data in production (sign-in):", {
+            mail: user.email,
+            displayName: user.displayName,
+            uid: user.uid,
+          });
         })
         .catch((error) => {
           const errorCode = error.code;
