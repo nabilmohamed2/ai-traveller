@@ -60,7 +60,7 @@ function LoginForm() {
             console.log("User signed up and state updated.");
             setTimeout(() => {
               navigate("/");
-            }, 50);
+            }, 5000);
           });
         })
         .catch((error) => {
@@ -88,7 +88,7 @@ function LoginForm() {
           console.log("User signed in and state updated.");
           setTimeout(() => {
             navigate("/");
-          }, 50);
+          }, 5000);
         })
         .catch((error) => {
           const errorCode = error.code;
