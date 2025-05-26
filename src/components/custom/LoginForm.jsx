@@ -45,6 +45,7 @@ function LoginForm() {
 
     if (isNewUser) {
       //sign up
+      console.log("Sign-up flow triggered in production"); // Log sign-up flow
       const name = username.current.value;
       createUserWithEmailAndPassword(
         auth,
@@ -86,6 +87,7 @@ function LoginForm() {
       navigate("/");
     } else {
       //sign in
+      onsole.log("Sign-in flow triggered in production"); // Log sign-in flow
       signInWithEmailAndPassword(
         auth,
         email.current.value,
