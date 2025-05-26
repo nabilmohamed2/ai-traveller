@@ -10,11 +10,21 @@ function Hotels() {
   console.log(hotels);
 
   return (
-    <div className="mt-8">
-      <h2 className="font-semibold text-xl">Recommended Hotels</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 h-100">
+    <div className="mt-8 px-4 sm:px-8 lg:px-16">
+      {/* Heading */}
+      <h2 className="font-bold text-2xl sm:text-3xl text-gray-800 text-center mb-6">
+        Recommended Hotels
+      </h2>
+
+      {/* Hotels Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {hotels.map((item, index) => (
-          <Recommended key={index} item={item} index={index} />
+          <div
+            key={index}
+            className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
+          >
+            <Recommended item={item} index={index} />
+          </div>
         ))}
       </div>
     </div>
