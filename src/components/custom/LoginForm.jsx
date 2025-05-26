@@ -58,7 +58,9 @@ function LoginForm() {
               })
             );
             console.log("User signed up and state updated.");
-            navigate("/"); // Navigate only after Redux state update
+            setTimeout(() => {
+              navigate("/");
+            }, 50);
           });
         })
         .catch((error) => {
@@ -84,7 +86,9 @@ function LoginForm() {
             })
           );
           console.log("User signed in and state updated.");
-          navigate("/"); // Navigate after dispatch
+          setTimeout(() => {
+            navigate("/");
+          }, 50);
         })
         .catch((error) => {
           const errorCode = error.code;
