@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { auth } from "@/Services/fireBase";
 
 function Header() {
   const { pathname } = useLocation();
+  const navigate = useNavigate(); // Initialize the navigate function
   const [location, setLocation] = useState(pathname); // Initialize state with the current pathname
 
   useEffect(() => {
@@ -13,8 +14,11 @@ function Header() {
   }, [pathname]);
 
   const handleSignOut = () => {
-    signOut(auth).catch((error) => console.log(error));
-    // Optionally handle redirect or state update after sign out
+    signOut(auth)
+      .then(() => {
+        navigate("/login"); // Navigate to the login page after signing out
+      })
+      .catch((error) => console.log(error));
   };
 
   return (
