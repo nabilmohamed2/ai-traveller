@@ -10,21 +10,16 @@ function DayPlan() {
   console.log(days);
 
   return (
-    <div className="mt-8 px-4 sm:px-8 lg:px-16">
+    <div className="px-4 sm:px-8 lg:px-16">
       {/* Heading */}
-      <h1 className="font-bold text-2xl sm:text-3xl text-gray-800 text-center mb-6">
+      <h1 className="mt-8 font-bold text-lg sm:text-xl lg:text-2xl text-gray-800">
         Places to Visit
       </h1>
 
-      {/* Days Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Day Cards */}
+      <div className="mt-6 space-y-6">
         {days.map((item, index) => (
-          <div
-            key={index}
-            className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
-          >
-            <DayCard item={item} index={index} days={days} />
-          </div>
+          <DayCard key={index} item={item} index={index} days={days} />
         ))}
       </div>
     </div>

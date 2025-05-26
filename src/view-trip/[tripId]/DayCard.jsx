@@ -2,20 +2,30 @@ import ResCard from "./ResCard";
 
 const DayCard = ({ item, index, days }) => {
   return (
-    <div key={index} className="p-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+    <div key={index}>
       {/* Day Heading */}
-      <h2 className="font-bold text-lg sm:text-xl text-gray-800">
+      <h2 className="font-semibold text-base sm:text-lg">
         {item.day !== days[index - 1]?.day ? "Day " + item.day : ""}
       </h2>
-      <h3 className="text-sm sm:text-base text-red-800 mt-1">
+      <h2 className="text-red-800 text-sm sm:text-base">
         Best time to visit: {item.bestTime}
-      </h3>
+      </h2>
 
       {/* Plan List */}
-      <div className="flex flex-col gap-4 mt-4">
-        {item.plan.map((items, index) => (
-          <ResCard key={index} items={items} />
-        ))}
+      <div className="flex gap-3 flex-col my-2">
+        {item.plan.map((items, index) => {
+          return (
+            <ResCard
+              items={{
+                ...items,
+                PlaceDetails: items.PlaceDetails.length > 100
+                  ? items.PlaceDetails.slice(0, 100) + "..."
+                  : items.PlaceDetails,
+              }}
+              index={index}
+            />
+          );
+        })}
       </div>
     </div>
   );
