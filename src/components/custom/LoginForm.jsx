@@ -1,4 +1,5 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState } from "react";
+import Header from "./Header";
 import { validateData } from "@/utils/validate";
 import {
   createUserWithEmailAndPassword,
@@ -7,43 +8,32 @@ import {
 } from "firebase/auth";
 import { auth } from "@/Services/fireBase";
 import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { setUser } from "@/redux/userSlice";
-import Header from "./Header";
+import { useDispatch } from "react-redux";
+import { setUser } from "@/store/userSlice"; // Adjust import path to your slice
 
 function LoginForm() {
   const [isNewUser, setIsNewUser] = useState(false);
-  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+  const toggle = () => setIsNewUser(!isNewUser);
+
   const email = useRef();
   const password = useRef();
   const username = useRef();
 
+  const [error, setError] = useState(null);
   const dispatch = useDispatch();
-  const navigate = useNavigate();
 
-  const user = useSelector((state) => state.user);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  // ✅ Navigate only after Redux state is set
-  useEffect(() => {
-    if (user && user.uid) {
-      navigate("/");
-    }
-  }, [user, navigate]);
-
-  const toggle = () => {
-    setIsNewUser(!isNewUser);
-    setError(null); // Clear error when switching modes
-  };
-
-  const handleSubmit = async () => {
-    const validate = validateData(
+    const validationError = validateData(
       email.current.value,
       password.current.value,
-      isNewUser && username.current.value
+      isNewUser ? username.current.value : null
     );
 
-    if (validate) {
-      setError(validate);
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
@@ -51,30 +41,34 @@ function LoginForm() {
 
     try {
       if (isNewUser) {
+        // Sign up flow
         const userCredential = await createUserWithEmailAndPassword(
           auth,
           email.current.value,
           password.current.value
         );
-        const user = userCredential.user;
 
-        await updateProfile(user, {
+        // Wait for profile update to finish
+        await updateProfile(userCredential.user, {
           displayName: username.current.value,
         });
 
+        // Dispatch user data to Redux
         dispatch(
           setUser({
-            mail: user.email,
+            mail: userCredential.user.email,
             displayName: username.current.value,
-            uid: user.uid,
+            uid: userCredential.user.uid,
           })
         );
       } else {
+        // Sign in flow
         const userCredential = await signInWithEmailAndPassword(
           auth,
           email.current.value,
           password.current.value
         );
+
         const user = userCredential.user;
 
         dispatch(
@@ -85,13 +79,11 @@ function LoginForm() {
           })
         );
       }
-      // ✅ No navigate() here – handled by useEffect
+
+      // Navigate only after dispatch
+      navigate("/");
     } catch (err) {
-      setError(
-        err.code === "auth/invalid-credential"
-          ? "Invalid credentials"
-          : `${err.code} - ${err.message}`
-      );
+      setError(err.message);
     }
   };
 
@@ -106,58 +98,74 @@ function LoginForm() {
         </div>
 
         <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-          <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {isNewUser && (
               <div>
-                <label className="block text-sm font-medium text-gray-900">
-                  Username
+                <label
+                  htmlFor="username"
+                  className="block text-sm font-medium text-gray-900"
+                >
+                  User name
                 </label>
                 <div className="mt-2">
                   <input
+                    id="username"
+                    name="username"
                     type="text"
                     ref={username}
                     required
-                    className="px-2 block w-full rounded-md border border-gray-300 py-1.5 text-gray-900 shadow-sm focus:ring-indigo-600"
+                    className="px-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 sm:text-sm"
                   />
                 </div>
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-900">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-900"
+              >
                 Email address
               </label>
               <div className="mt-2">
                 <input
-                  type="email"
+                  id="email"
+                  name="email"
                   ref={email}
+                  type="email"
                   required
-                  className="px-2 block w-full rounded-md border border-gray-300 py-1.5 text-gray-900 shadow-sm focus:ring-indigo-600"
+                  className="px-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 sm:text-sm"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-900"
+              >
                 Password
               </label>
               <div className="mt-2">
                 <input
+                  id="password"
+                  name="password"
                   type="password"
                   ref={password}
                   required
-                  className="px-2 block w-full rounded-md border border-gray-300 py-1.5 text-gray-900 shadow-sm focus:ring-indigo-600"
+                  className="px-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 sm:text-sm"
                 />
               </div>
             </div>
 
-            {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
+            {error && (
+              <p className="text-red-500 text-sm font-medium">{error}</p>
+            )}
 
             <div>
               <button
                 type="submit"
-                onClick={handleSubmit}
-                className="flex w-full justify-center rounded-md bg-black px-3 py-1.5 text-sm font-semibold text-white hover:bg-gray-800"
+                className="flex w-full justify-center rounded-md bg-slate-950 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-600"
               >
                 {isNewUser ? "Sign up" : "Sign in"}
               </button>
