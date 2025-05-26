@@ -1,5 +1,4 @@
-import React, { useRef, useState } from "react";
-import Header from "./Header";
+import React, { useRef, useState, useEffect } from "react";
 import { validateData } from "@/utils/validate";
 import {
   createUserWithEmailAndPassword,
@@ -8,23 +7,35 @@ import {
 } from "firebase/auth";
 import { auth } from "@/Services/fireBase";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { setUser } from "@/redux/userSlice"; // Make sure this import path is correct
+import { useDispatch, useSelector } from "react-redux";
+import { setUser } from "@/redux/userSlice";
+import Header from "./Header";
 
 function LoginForm() {
   const [isNewUser, setIsNewUser] = useState(false);
-  const navigate = useNavigate();
-  const toggle = () => {
-    setIsNewUser(!isNewUser);
-  };
-
+  const [error, setError] = useState(null);
   const email = useRef();
   const password = useRef();
   const username = useRef();
-  const [error, setError] = useState();
-  const dispatch = useDispatch();
 
-  const handleSubmit = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const user = useSelector((state) => state.user);
+
+  // ✅ Navigate only after Redux state is set
+  useEffect(() => {
+    if (user && user.uid) {
+      navigate("/");
+    }
+  }, [user, navigate]);
+
+  const toggle = () => {
+    setIsNewUser(!isNewUser);
+    setError(null); // Clear error when switching modes
+  };
+
+  const handleSubmit = async () => {
     const validate = validateData(
       email.current.value,
       password.current.value,
@@ -38,67 +49,49 @@ function LoginForm() {
 
     setError(null);
 
-    if (isNewUser) {
-      // Sign up
-      const name = username.current.value;
-      createUserWithEmailAndPassword(
-        auth,
-        email.current.value,
-        password.current.value
-      )
-        .then((userCredential) => {
-          const user = userCredential.user;
+    try {
+      if (isNewUser) {
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          email.current.value,
+          password.current.value
+        );
+        const user = userCredential.user;
 
-          updateProfile(auth.currentUser, { displayName: name }).then(() => {
-            dispatch(
-              setUser({
-                mail: email.current.value,
-                displayName: name,
-                uid: user.uid,
-              })
-            );
-            console.log("User signed up and state updated.");
-            setTimeout(() => {
-              navigate("/");
-            }, 5000);
-          });
-        })
-        .catch((error) => {
-          const errorCode = error.code;
-          const errorMessage = error.message;
-          setError(`${errorCode} - ${errorMessage}`);
+        await updateProfile(user, {
+          displayName: username.current.value,
         });
-    } else {
-      // Sign in
-      signInWithEmailAndPassword(
-        auth,
-        email.current.value,
-        password.current.value
-      )
-        .then((userCredential) => {
-          const user = userCredential.user;
 
-          dispatch(
-            setUser({
-              mail: user.email,
-              displayName: user.displayName,
-              uid: user.uid,
-            })
-          );
-          console.log("User signed in and state updated.");
-          setTimeout(() => {
-            navigate("/");
-          }, 5000);
-        })
-        .catch((error) => {
-          const errorCode = error.code;
-          const errorMessage = error.message;
-          setError(
-            errorCode === "auth/invalid-credential"
-              ? "Invalid Credential"
-              : `${errorCode} - ${errorMessage}`
-          );
-        });
+        dispatch(
+          setUser({
+            mail: user.email,
+            displayName: username.current.value,
+            uid: user.uid,
+          })
+        );
+      } else {
+        const userCredential = await signInWithEmailAndPassword(
+          auth,
+          email.current.value,
+          password.current.value
+        );
+        const user = userCredential.user;
+
+        dispatch(
+          setUser({
+            mail: user.email,
+            displayName: user.displayName,
+            uid: user.uid,
+          })
+        );
+      }
+      // ✅ No navigate() here – handled by useEffect
+    } catch (err) {
+      setError(
+        err.code === "auth/invalid-credential"
+          ? "Invalid credentials"
+          : `${err.code} - ${err.message}`
+      );
     }
   };
 
@@ -113,21 +106,18 @@ function LoginForm() {
         </div>
 
         <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-          <form
-            onSubmit={(e) => e.preventDefault()}
-            className="space-y-6"
-          >
+          <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
             {isNewUser && (
               <div>
                 <label className="block text-sm font-medium text-gray-900">
-                  User name
+                  Username
                 </label>
                 <div className="mt-2">
                   <input
                     type="text"
                     ref={username}
                     required
-                    className="px-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 sm:text-sm"
+                    className="px-2 block w-full rounded-md border border-gray-300 py-1.5 text-gray-900 shadow-sm focus:ring-indigo-600"
                   />
                 </div>
               </div>
@@ -139,10 +129,10 @@ function LoginForm() {
               </label>
               <div className="mt-2">
                 <input
-                  ref={email}
                   type="email"
+                  ref={email}
                   required
-                  className="px-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 sm:text-sm"
+                  className="px-2 block w-full rounded-md border border-gray-300 py-1.5 text-gray-900 shadow-sm focus:ring-indigo-600"
                 />
               </div>
             </div>
@@ -153,23 +143,21 @@ function LoginForm() {
               </label>
               <div className="mt-2">
                 <input
-                  ref={password}
                   type="password"
+                  ref={password}
                   required
-                  className="px-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 sm:text-sm"
+                  className="px-2 block w-full rounded-md border border-gray-300 py-1.5 text-gray-900 shadow-sm focus:ring-indigo-600"
                 />
               </div>
             </div>
 
-            {error && (
-              <p className="text-red-500 text-sm font-medium">{error}</p>
-            )}
+            {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
 
             <div>
               <button
                 type="submit"
                 onClick={handleSubmit}
-                className="flex w-full justify-center rounded-md bg-slate-950 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                className="flex w-full justify-center rounded-md bg-black px-3 py-1.5 text-sm font-semibold text-white hover:bg-gray-800"
               >
                 {isNewUser ? "Sign up" : "Sign in"}
               </button>
@@ -178,13 +166,12 @@ function LoginForm() {
 
           <p className="mt-10 text-center text-sm text-gray-500">
             {isNewUser ? "Already a member? " : "Not a member? "}
-            <a
-              href="#"
+            <button
               onClick={toggle}
               className="font-semibold text-indigo-600 hover:text-indigo-500"
             >
               {isNewUser ? "Sign in" : "Create a new account"}
-            </a>
+            </button>
           </p>
         </div>
       </div>
