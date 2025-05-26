@@ -10,7 +10,7 @@ import { auth } from "@/Services/fireBase";
 import { useNavigate } from "react-router-dom";
 import { doc, setDoc } from "firebase/firestore";
 import { useDispatch, useSelector } from "react-redux";
-
+import { setUser } from "@/utils/userSlice";
 
 function LoginForm() {
   const [isNewUser, setIsNewUser] = useState(false);
