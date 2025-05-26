@@ -27,7 +27,7 @@ function LoginForm() {
 
   const mail = useSelector((store) => store.user.mail);
   const dispatch = useDispatch();
-  useEffect(() => {navigate("/")}, [mail]);
+  //useEffect(() => {navigate("/")}, [mail]);
 
   const handleSubmit = () => {
 
@@ -86,9 +86,10 @@ function LoginForm() {
           setError(errorCode + "-" + errorMessage);
         })
 
+        navigate("/")
     } else {
       //sign in
-      onsole.log("Sign-in flow triggered in production"); // Log sign-in flow
+      console.log("Sign-in flow triggered in production"); // Log sign-in flow
       signInWithEmailAndPassword(
         auth,
         email.current.value,
@@ -117,6 +118,7 @@ function LoginForm() {
             displayName: user.displayName,
             uid: user.uid,
           });
+          navigate("/")
         })
         .catch((error) => {
           const errorCode = error.code;
