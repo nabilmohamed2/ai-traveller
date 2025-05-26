@@ -29,7 +29,10 @@ const routerConfig = createBrowserRouter([
     path: "/view-trip/:tripId",
     element: <ViewTrip />
   }
-]);
+],
+  {
+    basename: "/", // Ensure this is set correctly for Vercel
+  });
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
