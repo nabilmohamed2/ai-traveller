@@ -28,7 +28,7 @@ function CreateTrip() {
     // Check if previous trip exists and prompt the user
     if (previousTrip && previousTrip.id) {
       const confirmView = window.confirm(
-        "You have a previous trip plan. Would you like to view it?"
+        `You have a previous trip plan to ${previousTrip.userSelection.destination}. Would you like to view it?`
       );
       if (confirmView) {
         navigate(`/view-trip/${previousTrip.id}`); // Navigate to the previous trip

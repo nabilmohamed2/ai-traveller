@@ -18,13 +18,25 @@ function Header() {
   };
 
   return (
-    <div className="p-2 shadow-sm flex justify-between px-7">
-      <img src="./logo.svg" alt="Logo" />
-      <Link to="/login">
-        {location !== "/login" && (
-          <Button className="rounded-lg" onClick={handleSignOut}>Sign out</Button>
-        )}
+    <div className="p-2 shadow-sm flex items-center justify-between px-5 sm:px-7">
+      {/* Logo */}
+      <Link to="/">
+        <img
+          src="./logo.svg"
+          alt="Logo"
+          className="h-8 sm:h-10 object-contain"
+        />
       </Link>
+
+      {/* Sign Out Button */}
+      {location !== "/login" && (
+        <Button
+          className="rounded-lg text-sm sm:text-base px-3 py-1 sm:px-4 sm:py-2"
+          onClick={handleSignOut}
+        >
+          Sign out
+        </Button>
+      )}
     </div>
   );
 }
