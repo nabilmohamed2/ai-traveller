@@ -31,9 +31,14 @@ const routerConfig = createBrowserRouter([
   }
 ],
   {
+<<<<<<< HEAD
     basename: "/", // Add the base path for local and production
   }
 );
+=======
+    basename: "/", // Ensure this is set correctly for Vercel
+  });
+>>>>>>> ba31c421ce4ddcfbec98fb3caede130c1f0fcb9e
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
