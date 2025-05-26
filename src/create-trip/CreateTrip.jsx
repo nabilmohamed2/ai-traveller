@@ -1,5 +1,5 @@
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AI_PROMPT, budgetInfo, noOfPeople } from "@/components/constants/options";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -19,10 +19,22 @@ function CreateTrip() {
   });
 
   const mail = useSelector((store) => store.user.mail);
-
+  const previousTrip = useSelector((store) => store.travel.data); // Access previous trip from Redux
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if previous trip exists and prompt the user
+    if (previousTrip && previousTrip.id) {
+      const confirmView = window.confirm(
+        "You have a previous trip plan. Would you like to view it?"
+      );
+      if (confirmView) {
+        navigate(`/view-trip/${previousTrip.id}`); // Navigate to the previous trip
+      }
+    }
+  }, [previousTrip, navigate]);
 
   const processInput = (name, data) => {
     setFinalData({
@@ -34,6 +46,7 @@ function CreateTrip() {
   const inputValidate = async () => {
     if (!finalData?.budget || !finalData?.destination || !finalData?.noOfPeople || !finalData?.noOfDays) {
       toast("Please fill all the columns!");
+      return;
     }
 
     console.log(finalData);
