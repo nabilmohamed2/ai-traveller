@@ -29,11 +29,7 @@ const routerConfig = createBrowserRouter([
     path: "/view-trip/:tripId",
     element: <ViewTrip />
   }
-],
-  {
-    basename: "/ai-traveller", // Add the base path for local and production
-  }
-);
+]);
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
