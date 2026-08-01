@@ -36,16 +36,18 @@ function ViewTrip() {
   return loading ? (
     <Shimmer />
   ) : (
-    <div className="p-10 md:px-20 lg:px-44 xl:px-56">
-      {/* Information section */}
-      <InformationSection />
+    <div className="min-h-screen bg-[#fbfbfd]">
+      <div className="p-5 sm:p-10 md:px-20 lg:px-32 xl:px-44 max-w-7xl mx-auto">
+        {/* Information section */}
+        <InformationSection />
 
-      {/* Hotels */}
-      <Hotels />
-      {/* Daily plan */}
-      <DayPlan />
-      {/* Footer */}
-      <Footer />
+        {/* Hotels */}
+        <Hotels />
+        {/* Daily plan */}
+        <DayPlan />
+        {/* Footer */}
+        <Footer />
+      </div>
     </div>
   );
 }

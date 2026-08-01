@@ -5,19 +5,35 @@ import DayCard from "./DayCard";
 function DayPlan() {
   // Normalize data in the component
   const tripData = useSelector((state) => state.travel.data.tripData);
-  const days = tripData.itinerary?.days || tripData.Itinerary?.days || [];
+  
+  const getDaysArray = (data) => {
+    if (!data) return [];
+    const itinerary = data.itinerary || data.Itinerary;
+    if (Array.isArray(itinerary)) {
+      return itinerary;
+    }
+    if (itinerary && Array.isArray(itinerary.days)) {
+      return itinerary.days;
+    }
+    if (Array.isArray(data.days)) {
+      return data.days;
+    }
+    return [];
+  };
+
+  const days = getDaysArray(tripData);
 
   console.log(days);
 
   return (
-    <div className="px-4 sm:px-8 lg:px-16">
+    <div className="mt-12">
       {/* Heading */}
-      <h1 className="mt-8 font-bold text-lg sm:text-xl lg:text-2xl text-gray-800">
+      <h2 className="font-extrabold text-2xl sm:text-3xl text-zinc-900 mb-8 border-b border-zinc-200/60 pb-3 tracking-tight">
         Places to Visit
-      </h1>
+      </h2>
 
       {/* Day Cards */}
-      <div className="mt-6 space-y-6">
+      <div className="mt-6 space-y-10">
         {days.map((item, index) => (
           <DayCard key={index} item={item} index={index} days={days} />
         ))}
