@@ -1,28 +1,41 @@
-import React from "react";
 import { useSelector } from "react-redux";
+import HorizontalCarousel from "@/components/custom/HorizontalCarousel";
 import Recommended from "./Recommended";
 
 function Hotels() {
-  // Normalize data in the component
   const tripData = useSelector((state) => state.travel.data.tripData);
-  const hotels = tripData.hotels || tripData.Hotels || [];
-
-  console.log(hotels);
+  const hotels = tripData?.hotels || tripData?.Hotels || [];
 
   return (
-    <div className="mt-12 mb-16">
-      {/* Heading */}
-      <h2 className="font-extrabold text-2xl sm:text-3xl text-zinc-900 mb-8 border-b border-zinc-200/60 pb-3 tracking-tight">
-        Recommended Hotels
-      </h2>
-
-      {/* Hotels Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {hotels.map((item, index) => (
-          <Recommended key={index} item={item} index={index} />
-        ))}
+    <section
+      data-scroll-stop="view-hotels"
+      className="animate-editorial-rise min-h-[100svh] flex flex-col justify-center"
+      style={{
+        animationDelay: "0.65s",
+        paddingTop: "calc(var(--head-h) + 1rem)",
+        paddingBottom: "2.5rem",
+      }}
+    >
+      <div className="mb-4">
+        <p className="text-[11px] font-medium tracking-[0.22em] uppercase text-[var(--mute)] mb-2">
+          01 / Sanctuary
+        </p>
+        <h2 className="m-0 font-light tracking-[-0.028em] text-[clamp(1.65rem,3vw,2.5rem)] text-[var(--bone)]">
+          Recommended Stays
+        </h2>
       </div>
-    </div>
+
+      <HorizontalCarousel itemCount={hotels.length} label="stays">
+        {hotels.map((item, index) => (
+          <div
+            key={index}
+            className="w-[82vw] sm:w-[340px] lg:w-[360px] flex-shrink-0 snap-start"
+          >
+            <Recommended item={item} />
+          </div>
+        ))}
+      </HorizontalCarousel>
+    </section>
   );
 }
 

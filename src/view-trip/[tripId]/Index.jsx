@@ -1,12 +1,15 @@
 import { db } from "@/Services/fireBase";
 import { addTravelData } from "@/utils/travelSlice";
 import { doc, getDoc } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
-import InformationSection from "./InformationSection";
+import Header from "@/components/custom/Header";
+import PageCurtain from "@/components/custom/PageCurtain";
 import Shimmer from "@/components/custom/Shimmer";
+import { useSmoothPageScroll } from "@/hooks/useSmoothPageScroll";
+import InformationSection from "./InformationSection";
 import Hotels from "./Hotels";
 import DayPlan from "./DayPlan";
 import Footer from "./Footer";
@@ -14,40 +17,51 @@ import Footer from "./Footer";
 function ViewTrip() {
   const { tripId } = useParams();
   const [loading, setLoading] = useState(true);
-  console.log("Inside" + tripId);
+  const dispatch = useDispatch();
+
+  useSmoothPageScroll({ enabled: !loading, duration: 1250 });
+
   useEffect(() => {
-    console.log(tripId);
-    tripId && getData();
+    window.scrollTo(0, 0);
   }, [tripId]);
 
-  const dispatch = useDispatch();
-  const getData = async () => {
-    const docRef = doc(db, "AiTrip", tripId);
-    const docsnap = await getDoc(docRef);
-    if (docsnap.exists()) {
-      console.log("Document data: ", docsnap.data());
-      dispatch(addTravelData({ data: docsnap.data() }));
-    } else {
-      toast("No such document");
+  useEffect(() => {
+    const getData = async () => {
+      const docRef = doc(db, "AiTrip", tripId);
+      const docsnap = await getDoc(docRef);
+      if (docsnap.exists()) {
+        dispatch(addTravelData({ data: docsnap.data() }));
+      } else {
+        toast("No such document");
+      }
+      setLoading(false);
+    };
+
+    if (tripId) {
+      getData();
     }
-    setLoading(false);
-  };
+  }, [tripId, dispatch]);
 
-  return loading ? (
-    <Shimmer />
-  ) : (
-    <div className="min-h-screen bg-[#fbfbfd]">
-      <div className="p-5 sm:p-10 md:px-20 lg:px-32 xl:px-44 max-w-7xl mx-auto">
-        {/* Information section */}
+  if (loading) {
+    return <Shimmer />;
+  }
+
+  return (
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ backgroundColor: "var(--void)", color: "var(--bone)" }}
+    >
+      <PageCurtain />
+      <Header />
+      <main
+        className="flex-1 w-full max-w-6xl mx-auto"
+        style={{ padding: "0 var(--gutter)" }}
+      >
         <InformationSection />
-
-        {/* Hotels */}
         <Hotels />
-        {/* Daily plan */}
         <DayPlan />
-        {/* Footer */}
-        <Footer />
-      </div>
+      </main>
+      <Footer />
     </div>
   );
 }

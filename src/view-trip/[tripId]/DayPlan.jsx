@@ -1,11 +1,9 @@
-import React from "react";
 import { useSelector } from "react-redux";
 import DayCard from "./DayCard";
 
 function DayPlan() {
-  // Normalize data in the component
   const tripData = useSelector((state) => state.travel.data.tripData);
-  
+
   const getDaysArray = (data) => {
     if (!data) return [];
     const itinerary = data.itinerary || data.Itinerary;
@@ -23,22 +21,31 @@ function DayPlan() {
 
   const days = getDaysArray(tripData);
 
-  console.log(days);
-
   return (
-    <div className="mt-12">
-      {/* Heading */}
-      <h2 className="font-extrabold text-2xl sm:text-3xl text-zinc-900 mb-8 border-b border-zinc-200/60 pb-3 tracking-tight">
-        Places to Visit
-      </h2>
+    <section
+      data-scroll-stop="view-places"
+      data-free-scroll="true"
+      className="animate-editorial-rise pb-12"
+      style={{
+        animationDelay: "0.8s",
+        paddingTop: "calc(var(--head-h) + 1.5rem)",
+      }}
+    >
+      <div className="mb-10 border-b pb-5" style={{ borderColor: "var(--line)" }}>
+        <p className="text-[11px] font-medium tracking-[0.22em] uppercase text-[var(--mute)] mb-2">
+          02 / Daily Pacing
+        </p>
+        <h2 className="m-0 font-light tracking-[-0.028em] text-[clamp(1.65rem,3vw,2.5rem)] text-[var(--bone)]">
+          Places to Visit
+        </h2>
+      </div>
 
-      {/* Day Cards */}
-      <div className="mt-6 space-y-10">
+      <div className="space-y-12">
         {days.map((item, index) => (
-          <DayCard key={index} item={item} index={index} days={days} />
+          <DayCard key={index} item={item} />
         ))}
       </div>
-    </div>
+    </section>
   );
 }
 

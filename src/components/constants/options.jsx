@@ -1,16 +1,16 @@
 export const budgetInfo = [
   {
-    logo: "💵",
+    icon: "coins",
     name: "Cheap",
     desc: "Stay conscious of cost",
   },
   {
-    logo: "💰",
+    icon: "scale",
     name: "Moderate",
     desc: "Keep cost on the average side",
   },
   {
-    logo: "💸",
+    icon: "gem",
     name: "Luxury",
     desc: "Don't worry about cost",
   },
@@ -18,22 +18,22 @@ export const budgetInfo = [
 
 export const noOfPeople = [
   {
-    logo: "👦",
+    icon: "user",
     name: "Just me",
     desc: "A solo travel in exploration",
   },
   {
-    logo: "💑",
+    icon: "users",
     name: "Couples",
     desc: "Two travelers in tandem",
   },
   {
-    logo: "🏡",
+    icon: "home",
     name: "Family",
     desc: "A group of fun loving adv",
   },
   {
-    logo: "👥",
+    icon: "compass",
     name: "Friends",
     desc: "A bunch of thrill seekers",
   },

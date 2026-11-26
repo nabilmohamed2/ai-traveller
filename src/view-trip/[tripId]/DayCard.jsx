@@ -1,40 +1,59 @@
+/* eslint-disable react/prop-types */
+import { Sun } from "lucide-react";
+import HorizontalCarousel from "@/components/custom/HorizontalCarousel";
 import ResCard from "./ResCard";
 
-const DayCard = ({ item, index, days }) => {
-  const showDayHeader = item.day !== days[index - 1]?.day;
+const DayCard = ({ item }) => {
+  const places = item.plan || [];
 
   return (
-    <div key={index} className={showDayHeader ? "mt-6 border-l-2 border-indigo-100 pl-6 ml-2" : "pl-6 ml-2"}>
-      {/* Day Heading */}
-      {showDayHeader && (
-        <div className="relative">
-          <div className="absolute -left-[31px] top-1.5 w-4 h-4 bg-indigo-600 rounded-full border-4 border-white shadow-md"></div>
-          <h3 className="font-extrabold text-xl text-zinc-900 tracking-tight flex items-center gap-2">
+    <div
+      className="border-l pl-5 sm:pl-7 ml-1.5"
+      style={{ borderColor: "var(--line)" }}
+    >
+      <div className="relative mb-4">
+        <div
+          aria-hidden="true"
+          className="absolute -left-[25px] sm:-left-[33px] top-2 w-2.5 h-2.5 rounded-full"
+          style={{ backgroundColor: "var(--bronze)" }}
+        />
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h3 className="m-0 font-light tracking-[-0.02em] text-xl sm:text-2xl text-[var(--bone)]">
             Day {item.day}
           </h3>
-          <p className="text-zinc-500 text-xs sm:text-sm mt-1 mb-4 flex items-center gap-1.5">
-            🌅 Recommended Time: <span className="font-semibold text-indigo-600">{item.bestTime}</span>
-          </p>
+          {item.bestTime && (
+            <p className="m-0 text-[var(--mute)] text-xs flex items-center gap-1.5 tracking-wide">
+              <Sun strokeWidth={1.25} className="w-3.5 h-3.5 text-[var(--bronze)]" />
+              <span>
+                Recommended:{" "}
+                <span className="text-[var(--bone)]">{item.bestTime}</span>
+              </span>
+            </p>
+          )}
         </div>
-      )}
+      </div>
 
-      {/* Plan List */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 my-4">
-        {item.plan.map((items, idx) => {
-          return (
+      <HorizontalCarousel
+        itemCount={places.length}
+        label={`day ${item.day} places`}
+      >
+        {places.map((items, idx) => (
+          <div
+            key={idx}
+            className="w-[82vw] sm:w-[420px] lg:w-[460px] flex-shrink-0 snap-start"
+          >
             <ResCard
               items={{
                 ...items,
-                PlaceDetails: items.PlaceDetails.length > 120
-                  ? items.PlaceDetails.slice(0, 120) + "..."
-                  : items.PlaceDetails,
+                PlaceDetails:
+                  items.PlaceDetails?.length > 130
+                    ? items.PlaceDetails.slice(0, 130) + "..."
+                    : items.PlaceDetails,
               }}
-              key={idx}
-              index={idx}
             />
-          );
-        })}
-      </div>
+          </div>
+        ))}
+      </HorizontalCarousel>
     </div>
   );
 };
