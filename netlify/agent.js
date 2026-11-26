@@ -54,6 +54,9 @@ const MODEL_FALLBACKS = [
   "gemini-2.5-flash",
 ];
 
+const TOTAL_BUDGET_MS = 22000;
+const PER_CALL_TIMEOUT_MS = 10000;
+
 function isTransientCapacityError(err) {
   const msg = String(err?.message || err || "");
   const status = err?.status || err?.code;
@@ -65,39 +68,111 @@ function isTransientCapacityError(err) {
   );
 }
 
-async function generateWithGroq(prompt, groqApiKey, modelName) {
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${groqApiKey}`,
-    },
-    body: JSON.stringify({
-      model: modelName,
-      temperature: 0.7,
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content:
-            'Return ONLY valid JSON with two top-level keys: "hotels" (array of {HotelName, HotelAddress, Price, hotelImageUrl, GeoCoordinates, Rating, Description}) and "itinerary" (array of {day: number, bestTime: string, plan: [{placeName, PlaceDetails, PlaceImageUrl, GeoCoordinates, ticketPricing, Time}]}).',
-        },
-        { role: "user", content: prompt },
-      ],
-    }),
-  });
+function toText(val, fallback = "") {
+  if (val === null || val === undefined) return fallback;
+  return String(val);
+}
 
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Groq ${res.status}: ${errText}`);
+function normalizeGeoCoordinates(val) {
+  if (Array.isArray(val) && val.length >= 2) {
+    return `${val[0]}, ${val[1]}`;
   }
+  if (val && typeof val === "object") {
+    const lat = val.lat ?? val.latitude;
+    const lng = val.lng ?? val.lon ?? val.longitude;
+    if (lat !== undefined && lng !== undefined) {
+      return `${lat}, ${lng}`;
+    }
+  }
+  return toText(val);
+}
 
-  const data = await res.json();
-  const content = data?.choices?.[0]?.message?.content;
-  if (!content) {
-    throw new Error("Empty response from Groq");
+function normalizeGroqPayload(raw) {
+  const hotels = Array.isArray(raw?.hotels)
+    ? raw.hotels.map((h) => ({
+        HotelName: toText(h?.HotelName ?? h?.hotelName),
+        HotelAddress: toText(h?.HotelAddress ?? h?.hotelAddress),
+        Price:
+          typeof h?.Price === "number"
+            ? `$${h.Price} per night`
+            : toText(h?.Price ?? h?.price),
+        hotelImageUrl: toText(h?.hotelImageUrl ?? h?.HotelImageUrl),
+        GeoCoordinates: normalizeGeoCoordinates(h?.GeoCoordinates ?? h?.geoCoordinates),
+        Rating:
+          typeof h?.Rating === "number"
+            ? `${h.Rating} stars`
+            : toText(h?.Rating ?? h?.rating),
+        Description: toText(h?.Description ?? h?.description),
+      }))
+    : [];
+
+  const itinerary = Array.isArray(raw?.itinerary)
+    ? raw.itinerary.map((d, idx) => ({
+        day: Number(d?.day) || idx + 1,
+        bestTime: toText(d?.bestTime, "Morning"),
+        plan: Array.isArray(d?.plan)
+          ? d.plan.map((p) => ({
+              placeName: toText(p?.placeName),
+              PlaceDetails: toText(p?.PlaceDetails ?? p?.placeDetails),
+              PlaceImageUrl: toText(p?.PlaceImageUrl ?? p?.placeImageUrl),
+              GeoCoordinates: normalizeGeoCoordinates(p?.GeoCoordinates ?? p?.geoCoordinates),
+              ticketPricing:
+                typeof p?.ticketPricing === "number"
+                  ? p.ticketPricing === 0
+                    ? "Free"
+                    : `$${p.ticketPricing}`
+                  : toText(p?.ticketPricing),
+              Time: toText(p?.Time ?? p?.time),
+            }))
+          : [],
+      }))
+    : [];
+
+  return { hotels, itinerary };
+}
+
+async function generateWithGroq(prompt, groqApiKey, modelName, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${groqApiKey}`,
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: modelName,
+        temperature: 0.7,
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content:
+              'Return ONLY valid JSON with two top-level keys: "hotels" (array of {HotelName, HotelAddress, Price, hotelImageUrl, GeoCoordinates, Rating, Description}) and "itinerary" (array of {day: number, bestTime: string, plan: [{placeName, PlaceDetails, PlaceImageUrl, GeoCoordinates, ticketPricing, Time}]}). All fields except "day" MUST be strings (e.g. Price: "$120 per night", Rating: "4.5 stars", GeoCoordinates: "48.8566, 2.3522", ticketPricing: "$15" or "Free").',
+          },
+          { role: "user", content: prompt },
+        ],
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Groq ${res.status}: ${errText}`);
+    }
+
+    const data = await res.json();
+    const content = data?.choices?.[0]?.message?.content;
+    if (!content) {
+      throw new Error("Empty response from Groq");
+    }
+    const normalized = normalizeGroqPayload(JSON.parse(content));
+    return travelPlanSchema.parse(normalized);
+  } finally {
+    clearTimeout(timer);
   }
-  return travelPlanSchema.parse(JSON.parse(content));
 }
 
 // Generation node: Calls Groq primary (if configured), falling back to Gemini models
@@ -110,13 +185,24 @@ async function generatePlanNode(state) {
   const prompt = `Generate a detailed Travel Plan for Location: ${destination}, for ${noOfDays} days for ${noOfPeople} with a ${budget} budget.
 Ensure the output matches the required structured schema with recommended hotels and a day-by-day plan.`;
 
+  const deadline = Date.now() + TOTAL_BUDGET_MS;
   let lastErr;
 
   if (groqApiKey) {
     for (const groqModel of GROQ_MODEL_FALLBACKS) {
+      const remaining = deadline - Date.now();
+      if (remaining < 1500) {
+        lastErr = lastErr || new Error("Generation time budget exceeded");
+        break;
+      }
       try {
         newLogs.push({ step: "validating", message: `Sending prompt to Groq (${groqModel}) with Zod schema validation...` });
-        const response = await generateWithGroq(prompt, groqApiKey, groqModel);
+        const response = await generateWithGroq(
+          prompt,
+          groqApiKey,
+          groqModel,
+          Math.min(PER_CALL_TIMEOUT_MS, remaining)
+        );
         newLogs.push({ step: "done", message: `Response received from Groq (${groqModel}) and validated successfully.` });
         return {
           hotels: response.hotels || [],
@@ -124,13 +210,18 @@ Ensure the output matches the required structured schema with recommended hotels
           logs: newLogs,
         };
       } catch (err) {
-        lastErr = err;
-        newLogs.push({ step: "retrying", message: `Groq (${groqModel}) failed (${err.message}); trying next model...` });
+        lastErr = err.name === "AbortError" ? new Error(`Groq (${groqModel}) timed out`) : err;
+        newLogs.push({ step: "retrying", message: `Groq (${groqModel}) failed (${lastErr.message}); trying next model...` });
       }
     }
   }
 
   for (const modelName of MODEL_FALLBACKS) {
+    const remaining = deadline - Date.now();
+    if (remaining < 1500) {
+      lastErr = lastErr || new Error("Generation time budget exceeded");
+      break;
+    }
     try {
       const model = new ChatGoogleGenerativeAI({
         model: modelName,
