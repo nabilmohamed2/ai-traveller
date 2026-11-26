@@ -92,10 +92,17 @@ function CreateTrip() {
       let tripData = null;
       let logs = [];
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(
+        () => controller.abort(),
+        import.meta.env.DEV ? 5000 : 25000
+      );
+
       try {
         const response = await fetch(apiEndpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
           body: JSON.stringify({
             destination: finalData.destination,
             noOfDays: finalData.noOfDays,
@@ -113,8 +120,12 @@ function CreateTrip() {
         }
       } catch (fetchErr) {
         if (!import.meta.env.DEV) {
-          throw fetchErr;
+          throw fetchErr.name === "AbortError"
+            ? new Error("Request timed out while generating itinerary")
+            : fetchErr;
         }
+      } finally {
+        clearTimeout(timeoutId);
       }
 
       // Fallback in local Vite dev when Netlify Dev server (:8888) is not running
@@ -126,11 +137,12 @@ function CreateTrip() {
           .replace("{totalDays}", finalData.noOfDays);
 
         const result = await chatSession.sendMessage(prompt);
-        const text = result?.response?.text();
+        const text = result?.response?.text()?.trim();
         if (!text) {
           throw new Error("Empty response from AI model");
         }
-        tripData = JSON.parse(text);
+        const cleanedText = text.replace(/^```(?:json)?\s*|\s*```$/g, "");
+        tripData = JSON.parse(cleanedText);
       }
 
       if (!tripData) {
